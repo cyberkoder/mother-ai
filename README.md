@@ -1,46 +1,208 @@
-# Getting Started with Create React App
+# 🛸 MU/TH/UR 6000 - AI Interface
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A retro-futuristic AI chatbot interface inspired by the MU/TH/UR 6000 computer from the *Alien* franchise. Experience the cold, calculated responses of an AI mainframe with authentic CRT monitor aesthetics and multiple AI provider support.
 
-## Available Scripts
+![Mother AI Interface](https://img.shields.io/badge/Status-Operational-brightgreen?style=for-the-badge)
+![React](https://img.shields.io/badge/React-18.3.1-61dafb?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.1.6-3178c6?style=for-the-badge&logo=typescript)
+![Tailwind](https://img.shields.io/badge/Tailwind-3.4.0-38bdf8?style=for-the-badge&logo=tailwindcss)
 
-In the project directory, you can run:
+## 🎬 Features
 
-### `npm start`
+### 🤖 Multi-AI Provider Support
+- **Ollama** (Local/Remote servers with model dropdown)
+- **OpenAI** (GPT-3.5, GPT-4, etc.)
+- **Google Gemini** (Gemini Pro, Gemini Pro Vision)
+- **Anthropic Claude** (Claude 3 Sonnet, Haiku, etc.)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### 🎨 Authentic Retro Aesthetics
+- **CRT Monitor Effects** - Scanlines, phosphor glow, and screen flicker
+- **6 Color Themes** - Alien Green, Amber Terminal, Cyber Blue, HAL Red, Void Purple, Matrix Cyan
+- **Retro Typography** - Monospace fonts with authentic terminal styling
+- **Boot Sequence** - Classic computer startup animation
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### ⚙️ Advanced Configuration
+- **Settings Modal** - Easy-to-use configuration interface
+- **Model Selection** - Dynamic model dropdown for Ollama
+- **Sound Effects** - Optional retro computer sounds
+- **Persistent Settings** - All configurations saved locally
 
-### `npm test`
+### 🛡️ Security & Privacy
+- **Local Storage** - All settings stored in browser localStorage
+- **No Server Storage** - API keys never leave your browser
+- **Git Safe** - Sensitive data automatically excluded from version control
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🚀 Quick Start
 
-### `npm run build`
+### Prerequisites
+- Node.js 16+ and npm
+- Optional: Ollama server (local or remote)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/mother-ai.git
+cd mother-ai
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Install dependencies
+npm install
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Start the development server
+npm start
+```
 
-### `npm run eject`
+The interface will open at `http://localhost:3000`
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## 🔧 Configuration
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Initial Setup
+1. **Open Settings** - Click the `◦ CONFIG ◦` button or type `settings`
+2. **Choose AI Provider** - Select from Ollama, OpenAI, Google, or Anthropic
+3. **Configure Credentials** - Add your API keys or Ollama server URL
+4. **Select Model** - Choose from available models
+5. **Customize Theme** - Pick your preferred color scheme
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### AI Provider Setup
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+#### Ollama (Recommended for Local Use)
+```bash
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
 
-## Learn More
+# Pull a model
+ollama pull llama3.1:8b
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# Start Ollama server
+ollama serve
+```
+Default URL: `http://localhost:11434`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+#### OpenAI
+1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Enter key in settings: `sk-...`
+3. Available models: `gpt-4`, `gpt-3.5-turbo`
+
+#### Google Gemini
+1. Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Enter key in settings: `AI...`
+3. Available models: `gemini-pro`, `gemini-pro-vision`
+
+#### Anthropic Claude
+1. Get API key from [Anthropic Console](https://console.anthropic.com/)
+2. Enter key in settings: `sk-ant-...`
+3. Available models: `claude-3-sonnet-20240229`, `claude-3-haiku-20240307`
+
+## 🎮 Usage
+
+### Chat Commands
+- **Normal Chat** - Type any message to interact with the AI
+- **`settings`** - Open configuration panel
+- **`show models`** - List available models for current provider
+
+### Interface Features
+- **Boot Sequence** - Authentic startup animation on first load
+- **Sound Effects** - Toggle retro computer sounds in settings
+- **Theme Switching** - Real-time color theme changes
+- **Model Switching** - Dynamic model selection with size information
+
+## 🛠️ Development
+
+### Project Structure
+```
+src/
+├── components/          # React components
+│   ├── ChatInterface.tsx    # Main chat interface
+│   └── SettingsModal.tsx    # Configuration modal
+├── contexts/            # React contexts
+│   └── SettingsContext.tsx  # Settings state management
+├── services/            # API services
+│   └── aiService.ts         # AI provider integrations
+├── hooks/              # Custom React hooks
+│   └── useSoundEffects.ts   # Audio effects
+└── index.css           # Global styles and themes
+```
+
+### Available Scripts
+```bash
+npm start      # Development server
+npm run build  # Production build
+npm test       # Run tests
+npm run lint   # Code linting
+```
+
+### Adding New Themes
+1. Update `colorThemes` in `SettingsModal.tsx`
+2. Add color values to `themeColors` in `ChatInterface.tsx`
+3. Update CSS variables in `tailwind.config.js`
+
+### Adding New AI Providers
+1. Add provider type to `SettingsContext.tsx`
+2. Implement API integration in `aiService.ts`
+3. Add provider configuration in `SettingsModal.tsx`
+
+## 🔒 Security Notes
+
+- **API Keys** are stored in browser localStorage only
+- **Settings** are never transmitted to external servers
+- **Git Ignore** automatically excludes sensitive files
+- **No Telemetry** - All processing happens locally
+
+## 📱 Browser Support
+
+- **Chrome/Edge** 90+ (Recommended)
+- **Firefox** 88+
+- **Safari** 14+
+- **Mobile** - Responsive design supports mobile devices
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+## 📋 Roadmap
+
+- [ ] Voice input/output
+- [ ] Conversation history
+- [ ] Export chat transcripts
+- [ ] Custom AI provider support
+- [ ] PWA support
+- [ ] Docker deployment
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**"No models detected"**
+- Verify Ollama server is running: `ollama serve`
+- Check server URL in settings
+- Ensure models are pulled: `ollama pull llama3.1:8b`
+
+**"API Key Invalid"**
+- Verify API key format and permissions
+- Check provider documentation for correct format
+- Ensure API key has sufficient credits/quota
+
+**"CORS Errors"**
+- For Ollama: Add CORS headers to server config
+- For other providers: Use HTTPS URLs only
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Ridley Scott** - For creating the Alien universe
+- **H.R. Giger** - For the iconic aesthetic inspiration
+- **Weyland-Yutani Corporation** - For the fictional computer systems
+
+## 👨‍💻 Created By
+
+**Andrew Leonenko** - [https://a.leonenko.me/](https://a.leonenko.me/)
+
+---
+
+*"I can't lie to you about your chances, but... you have my sympathies."* - MU/TH/UR 6000
