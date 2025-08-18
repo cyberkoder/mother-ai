@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 import { useSettings } from '../contexts/SettingsContext';
 import { AIService } from '../services/aiService';
+import { wikiDB } from '../services/wikiDatabase';
+import { Planet, Alien } from '../types/wiki';
 import SettingsModal from './SettingsModal';
 
 interface Message {
@@ -39,6 +41,7 @@ const ChatInterface: React.FC = () => {
     'NOSTROMO MAINFRAME BOOT SEQUENCE',
     'INITIALIZING MU/TH/UR 6000...',
     'LOADING NEURAL PROTOCOLS...',
+    'LOADING KNOWLEDGE DATABASE...',
     'ESTABLISHING SECURE CONNECTION...',
     'INTERFACE READY',
     'AWAITING CREW INPUT...'
@@ -198,6 +201,141 @@ const ChatInterface: React.FC = () => {
     }
   };
 
+  const handleWikiCommand = (input: string): string => {
+    const parts = input.trim().split(' ');
+    const command = parts[0];
+    const args = parts.slice(1);
+
+    switch (command) {
+      case '/wiki':
+        if (args.length === 0) {
+          return `NOSTROMO KNOWLEDGE DATABASE ACTIVE
+
+AVAILABLE COMMANDS:
+/planets [search] - Search planetary database
+/aliens [search] - Search xenobiological database
+/wiki help - Show this help message
+
+EXAMPLES:
+/planets Tatooine
+/aliens Xenomorph
+/planets desert
+/aliens humanoid
+
+DATABASE ENTRIES: ${wikiDB.getAllPlanets().length} planets, ${wikiDB.getAllAliens().length} alien species`;
+        }
+        if (args[0] === 'help') {
+          return handleWikiCommand('/wiki');
+        }
+        break;
+
+      case '/planets':
+        if (args.length === 0) {
+          const planets = wikiDB.getAllPlanets();
+          return `PLANETARY DATABASE - ${planets.length} ENTRIES:
+
+${planets.map(p => `• ${p.name.toUpperCase()} (${p.franchise}) - ${p.classification}`).join('\n')}
+
+Use: /planets [name] to get detailed information`;
+        } else {
+          const query = args.join(' ');
+          const results = wikiDB.searchPlanets(query);
+          if (results.length > 0) {
+            if (results.length === 1) {
+              return formatPlanetDetails(results[0]);
+            } else {
+              return `PLANETARY SEARCH RESULTS (${results.length}):
+
+${results.map(p => `• ${p.name.toUpperCase()} (${p.franchise}) - ${p.classification}`).join('\n')}
+
+Use: /planets [exact name] for detailed information`;
+            }
+          } else {
+            return `NO PLANETARY DATA FOUND FOR: "${query.toUpperCase()}"
+
+SUGGESTION: Try /planets to see all available entries`;
+          }
+        }
+        break;
+
+      case '/aliens':
+        if (args.length === 0) {
+          const aliens = wikiDB.getAllAliens();
+          return `XENOBIOLOGICAL DATABASE - ${aliens.length} ENTRIES:
+
+${aliens.map(a => `• ${a.name.toUpperCase()} (${a.franchise}) - ${a.classification}`).join('\n')}
+
+Use: /aliens [name] to get detailed information`;
+        } else {
+          const query = args.join(' ');
+          const results = wikiDB.searchAliens(query);
+          if (results.length > 0) {
+            if (results.length === 1) {
+              return formatAlienDetails(results[0]);
+            } else {
+              return `XENOBIOLOGICAL SEARCH RESULTS (${results.length}):
+
+${results.map(a => `• ${a.name.toUpperCase()} (${a.franchise}) - ${a.classification}`).join('\n')}
+
+Use: /aliens [exact name] for detailed information`;
+            }
+          } else {
+            return `NO XENOBIOLOGICAL DATA FOUND FOR: "${query.toUpperCase()}"
+
+SUGGESTION: Try /aliens to see all available entries`;
+          }
+        }
+        break;
+
+      default:
+        return 'UNKNOWN WIKI COMMAND. Use /wiki for help.';
+    }
+    return 'COMMAND PROCESSING ERROR.';
+  };
+
+  const formatPlanetDetails = (planet: Planet): string => {
+    return `PLANETARY ANALYSIS: ${planet.name.toUpperCase()}
+
+CLASSIFICATION: ${planet.classification}
+LOCATION: ${planet.location}
+ATMOSPHERE: ${planet.atmosphere}
+GRAVITY: ${planet.gravity}
+CLIMATE: ${planet.climate}
+
+DESCRIPTION:
+${planet.description}
+
+NOTABLE FEATURES:
+${planet.notable_features.map(f => `• ${f}`).join('\n')}
+
+NOTABLE LOCATIONS:
+${planet.notable_locations.map(l => `• ${l}`).join('\n')}
+
+INHABITANTS: ${planet.inhabitants.join(', ')}
+FIRST DOCUMENTED: ${planet.first_appearance}`;
+  };
+
+  const formatAlienDetails = (alien: Alien): string => {
+    return `XENOBIOLOGICAL ANALYSIS: ${alien.name.toUpperCase()}
+
+SPECIES: ${alien.species}
+CLASSIFICATION: ${alien.classification}
+HOME PLANET: ${alien.home_planet}
+INTELLIGENCE LEVEL: ${alien.intelligence_level}
+PHYSIOLOGY: ${alien.physiology}
+
+DESCRIPTION:
+${alien.description}
+
+NOTABLE ABILITIES:
+${alien.notable_abilities.map(a => `• ${a}`).join('\n')}
+
+NOTABLE INDIVIDUALS:
+${alien.notable_individuals.map(i => `• ${i}`).join('\n')}
+
+FIRST DOCUMENTED: ${alien.first_appearance}`;
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || isBooting) return;
 
@@ -293,6 +431,32 @@ const ChatInterface: React.FC = () => {
     }
 
     setIsSelectingModel(false);
+
+    // Check for wiki commands
+    if (input.toLowerCase().startsWith('/planets') || input.toLowerCase().startsWith('/aliens') || 
+        input.toLowerCase().startsWith('/wiki')) {
+      if (settings.enableSounds) playBeep();
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        content: input,
+        sender: 'user',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage]);
+      setInput('');
+      
+      const wikiResponse = handleWikiCommand(input.toLowerCase());
+      const motherMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: wikiResponse,
+        sender: 'mother',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, motherMessage]);
+      setTypingMessageId(motherMessage.id);
+      typewriterEffect(motherMessage.id, motherMessage.content, 30);
+      return;
+    }
 
     if (settings.enableSounds) playBeep();
     const userMessage: Message = {
