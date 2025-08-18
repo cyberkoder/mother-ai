@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 import { useSettings } from '../contexts/SettingsContext';
 import { AIService } from '../services/aiService';
@@ -22,6 +22,10 @@ const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
+  const [displayedText, setDisplayedText] = useState<{ [key: string]: string }>({});
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const [isBooting, setIsBooting] = useState(true);
   const [availableModels, setAvailableModels] = useState<Model[]>([]);
   const [isSelectingModel, setIsSelectingModel] = useState(false);
@@ -39,6 +43,51 @@ const ChatInterface: React.FC = () => {
     'INTERFACE READY',
     'AWAITING CREW INPUT...'
   ];
+
+  // Copy message to clipboard
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (settings.enableSounds) playBeep();
+    } catch (error) {
+      console.error('Failed to copy text:', error);
+    }
+  };
+
+  // Clear chat messages
+  const clearChat = () => {
+    setMessages([]);
+    setCommandHistory([]);
+    setHistoryIndex(-1);
+    setInput('');
+    setTypingMessageId(null);
+    setDisplayedText({});
+    if (settings.enableSounds) playBeep();
+  };
+
+  // Typewriter effect for MOTHER's messages
+  const typewriterEffect = useCallback((messageId: string, text: string, speed: number = 30) => {
+    let index = 0;
+    setDisplayedText(prev => ({ ...prev, [messageId]: '' }));
+    
+    const interval = setInterval(() => {
+      if (index < text.length) {
+        setDisplayedText(prev => ({
+          ...prev,
+          [messageId]: text.substring(0, index + 1)
+        }));
+        index++;
+        if (settings.enableSounds && index % 3 === 0) {
+          playKeypress();
+        }
+      } else {
+        clearInterval(interval);
+        setTypingMessageId(null);
+      }
+    }, speed);
+    
+    return () => clearInterval(interval);
+  }, [settings.enableSounds, playKeypress]);
 
   // Update theme colors when theme changes
   useEffect(() => {
@@ -63,23 +112,26 @@ const ChatInterface: React.FC = () => {
       const interval = setInterval(() => {
         if (index < bootSequence.length) {
           if (settings.enableSounds) playBootSound();
-          setMessages(prev => [...prev, {
+          const bootMessage = {
             id: `boot-${index}`,
             content: bootSequence[index],
-            sender: 'mother',
+            sender: 'mother' as const,
             timestamp: new Date()
-          }]);
+          };
+          setMessages(prev => [...prev, bootMessage]);
+          setTypingMessageId(bootMessage.id);
+          typewriterEffect(bootMessage.id, bootMessage.content, 15);
           index++;
         } else {
           setIsBooting(false);
           clearInterval(interval);
           inputRef.current?.focus();
         }
-      }, 800);
+      }, 1200);
       return () => clearInterval(interval);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isBooting, playBootSound]);
+  }, [isBooting, playBootSound, typewriterEffect]);
 
   useEffect(() => {
     scrollToBottom();
@@ -149,7 +201,19 @@ const ChatInterface: React.FC = () => {
   const sendMessage = async () => {
     if (!input.trim() || isBooting) return;
 
+    // Add command to history
+    if (input.trim() && !commandHistory.includes(input.trim())) {
+      setCommandHistory(prev => [...prev.slice(-19), input.trim()]); // Keep last 20 commands
+    }
+    setHistoryIndex(-1);
+
     // Check for special commands
+    if (input.toLowerCase() === 'clear' || input.toLowerCase() === 'cls') {
+      if (settings.enableSounds) playBeep();
+      clearChat();
+      return;
+    }
+    
     if (input.toLowerCase() === 'settings' || input.toLowerCase() === 'config') {
       if (settings.enableSounds) playBeep();
       const userMessage: Message = {
@@ -169,6 +233,8 @@ const ChatInterface: React.FC = () => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, settingsMessage]);
+      setTypingMessageId(settingsMessage.id);
+      typewriterEffect(settingsMessage.id, settingsMessage.content, 20);
       return;
     }
 
@@ -254,6 +320,8 @@ const ChatInterface: React.FC = () => {
       setTimeout(() => {
         setMessages(prev => [...prev, motherMessage]);
         setIsTyping(false);
+        setTypingMessageId(motherMessage.id);
+        typewriterEffect(motherMessage.id, motherMessage.content);
       }, 1000);
     } catch (error) {
       console.error('AI Service Error:', error);
@@ -271,29 +339,57 @@ const ChatInterface: React.FC = () => {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       sendMessage();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (commandHistory.length > 0) {
+        const newIndex = historyIndex === -1 ? commandHistory.length - 1 : Math.max(0, historyIndex - 1);
+        setHistoryIndex(newIndex);
+        setInput(commandHistory[newIndex]);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex !== -1) {
+        const newIndex = historyIndex + 1;
+        if (newIndex >= commandHistory.length) {
+          setHistoryIndex(-1);
+          setInput('');
+        } else {
+          setHistoryIndex(newIndex);
+          setInput(commandHistory[newIndex]);
+        }
+      }
     }
   };
 
   return (
     <div className="h-screen w-full crt p-8">
       <div className="h-full flex flex-col">
-        <header className="mb-4 flex justify-between items-start">
-          <div>
-            <h1 className="text-alien-green font-mono text-2xl text-glow">
+        <header className="mb-6 flex justify-between items-start">
+          <div className="text-left">
+            <h1 className="text-alien-green font-mono text-3xl text-glow tracking-wider">
               MU/TH/UR 6000
             </h1>
-            <p className="text-alien-green font-mono text-xs opacity-70">
+            <p className="text-alien-green font-mono text-sm opacity-70 mt-2">
               INTERFACE 2037 - WEYLAND-YUTANI CORP
             </p>
           </div>
           <div className="text-right">
-            <button
-              onClick={() => setShowSettings(true)}
-              className="mb-2 px-3 py-1 border border-alien-green/40 bg-black/80 font-mono text-xs text-alien-green hover:border-alien-green hover:bg-alien-green/5 hover:text-glow transition-all relative group"
-            >
-              <span className="relative z-10">◦ CONFIG ◦</span>
-              <div className="absolute inset-0 border border-alien-green/20 rounded opacity-0 group-hover:opacity-100 transition-opacity animate-pulse"></div>
-            </button>
+            <div className="flex gap-2 mb-2">
+              <button
+                onClick={clearChat}
+                className="px-3 py-1 border-2 border-alien-green/50 bg-black/80 font-mono text-xs text-alien-green/70 hover:border-alien-green hover:bg-alien-green/5 hover:text-alien-green transition-all"
+                title="Clear chat (or type 'clear')"
+              >
+                CLEAR
+              </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="px-3 py-1 border-2 border-alien-green bg-black/80 font-mono text-xs text-alien-green hover:border-alien-green hover:bg-alien-green/5 hover:text-glow transition-all relative group"
+              >
+                <span className="relative z-10">◦ CONFIG ◦</span>
+                <div className="absolute inset-0 border border-alien-green/20 rounded opacity-0 group-hover:opacity-100 transition-opacity animate-pulse"></div>
+              </button>
+            </div>
             <p className="text-alien-green font-mono text-xs opacity-70">
               PROVIDER: {settings.aiProvider.toUpperCase()}
             </p>
@@ -306,28 +402,56 @@ const ChatInterface: React.FC = () => {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto mb-4 border border-alien-green/30 rounded p-4 bg-black/50">
-          <div className="space-y-2">
+        <div className="flex-1 overflow-y-auto mb-4 border-2 border-alien-green rounded p-4 bg-black/50">
+          <div className="space-y-3">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`font-mono text-sm ${
+                className={`font-mono text-base ${
                   message.sender === 'user' 
-                    ? 'text-alien-green/80' 
+                    ? 'pl-4 border-l-2 border-alien-green/50 text-alien-green' 
                     : 'text-alien-green text-glow'
                 }`}
               >
-                <span className="opacity-50">
-                  [{message.sender === 'user' ? 'CREW' : 'MOTHER'}]
-                </span>
-                {' > '}
-                <span className={message.sender === 'mother' && isBooting ? 'animate-pulse' : ''}>
-                  {message.content}
-                </span>
+                {message.sender === 'user' ? (
+                  <>
+                    <span className="text-sm opacity-70">
+                      [CREW]
+                    </span>
+                    <div className="mt-1">
+                      <span className="text-alien-green/60">&gt;&gt; </span>
+                      <span className="uppercase tracking-wider">{message.content}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="group relative">
+                      <span className="text-alien-green text-glow">{'> '}</span>
+                      <span className={`${message.sender === 'mother' && isBooting ? 'animate-pulse' : ''} text-glow`}>
+                        {typingMessageId === message.id 
+                          ? displayedText[message.id] || ''
+                          : message.content}
+                        {typingMessageId === message.id && (
+                          <span className="terminal-cursor animate-pulse ml-1">_</span>
+                        )}
+                      </span>
+                      {/* Copy button - only show when not typing */}
+                      {typingMessageId !== message.id && (
+                        <button
+                          onClick={() => copyToClipboard(message.content)}
+                          className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 text-xs text-alien-green/60 hover:text-alien-green border border-alien-green/30 hover:border-alien-green/60 rounded bg-black/50 hover:bg-alien-green/5"
+                          title="Copy response"
+                        >
+                          COPY
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             ))}
             {isTyping && (
-              <div className="text-alien-green font-mono text-sm text-glow">
+              <div className="text-alien-green font-mono text-base text-glow">
                 <span className="opacity-50">[MOTHER]</span>
                 {' > '}
                 <span className="terminal-cursor">PROCESSING</span>
@@ -337,11 +461,15 @@ const ChatInterface: React.FC = () => {
           </div>
         </div>
 
-        <div className="border border-alien-green/30 rounded p-2 bg-black/50">
-          <div className="flex items-center">
-            <span className="text-alien-green font-mono text-sm mr-2 opacity-70">
-              CREW &gt;
-            </span>
+        <div className="border-2 border-alien-green rounded bg-black/80">
+          <div className="flex items-center p-3">
+            <div className="flex items-center gap-2 mr-3">
+              <div className="w-2 h-2 bg-alien-green rounded-full animate-pulse"></div>
+              <span className="text-alien-green font-mono text-base uppercase tracking-wider">
+                CREW
+              </span>
+            </div>
+            <span className="text-alien-green/50 font-mono text-base mr-2">&gt;&gt;</span>
             <input
               ref={inputRef}
               type="text"
@@ -352,9 +480,15 @@ const ChatInterface: React.FC = () => {
               }}
               onKeyPress={handleKeyPress}
               disabled={isBooting}
-              className="flex-1 bg-transparent text-alien-green font-mono text-sm outline-none placeholder-alien-green/30"
+              className="flex-1 bg-transparent text-alien-green font-mono text-base outline-none placeholder-alien-green/30 uppercase tracking-wider"
               placeholder={isBooting ? "SYSTEM BOOTING..." : "ENTER COMMAND..."}
+              style={{ textTransform: 'uppercase' }}
             />
+            {input && (
+              <span className="text-alien-green/30 text-xs font-mono ml-2">
+                [{input.length} CHARS]
+              </span>
+            )}
           </div>
         </div>
 

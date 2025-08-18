@@ -134,7 +134,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     className={`p-3 border rounded font-mono text-sm transition-all ${
                       settings.aiProvider === provider.value
                         ? 'bg-black border-alien-green border-2 text-alien-green shadow-lg'
-                        : 'border-alien-green border-opacity-30 hover:border-opacity-60 text-alien-green'
+                        : 'border-alien-green text-alien-green hover:border-2'
                     }`}
                   >
                     {provider.label}
@@ -152,7 +152,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     type="text"
                     value={settings.ollamaUrl}
                     onChange={(e) => updateSettings({ ollamaUrl: e.target.value })}
-                    className="w-full bg-transparent border border-alien-green rounded p-2 font-mono text-sm text-alien-green placeholder-alien-green/30"
+                    className="w-full bg-transparent border-2 border-alien-green rounded p-2 font-mono text-sm text-alien-green placeholder-alien-green/30"
                     placeholder="https://your-ollama-server.com"
                   />
                 </div>
@@ -165,7 +165,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     type="password"
                     value={settings.openaiApiKey}
                     onChange={(e) => handleApiKeyChange('openaiApiKey', e.target.value)}
-                    className="w-full bg-transparent border border-alien-green rounded p-2 font-mono text-sm text-alien-green placeholder-alien-green/30"
+                    className="w-full bg-transparent border-2 border-alien-green rounded p-2 font-mono text-sm text-alien-green placeholder-alien-green/30"
                     placeholder="sk-..."
                   />
                 </div>
@@ -178,7 +178,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     type="password"
                     value={settings.googleApiKey}
                     onChange={(e) => handleApiKeyChange('googleApiKey', e.target.value)}
-                    className="w-full bg-transparent border border-alien-green rounded p-2 font-mono text-sm text-alien-green placeholder-alien-green/30"
+                    className="w-full bg-transparent border-2 border-alien-green rounded p-2 font-mono text-sm text-alien-green placeholder-alien-green/30"
                     placeholder="AI..."
                   />
                 </div>
@@ -191,7 +191,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     type="password"
                     value={settings.anthropicApiKey}
                     onChange={(e) => handleApiKeyChange('anthropicApiKey', e.target.value)}
-                    className="w-full bg-transparent border border-alien-green rounded p-2 font-mono text-sm text-alien-green placeholder-alien-green/30"
+                    className="w-full bg-transparent border-2 border-alien-green rounded p-2 font-mono text-sm text-alien-green placeholder-alien-green/30"
                     placeholder="sk-ant-..."
                   />
                 </div>
@@ -204,7 +204,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     <button
                       onClick={loadOllamaModels}
                       disabled={loadingModels}
-                      className="px-2 py-1 border border-alien-green rounded font-mono text-xs text-alien-green hover:bg-alien-green hover:bg-opacity-20 transition-all disabled:opacity-50"
+                      className="px-2 py-1 border-2 border-alien-green rounded font-mono text-xs text-alien-green hover:bg-alien-green hover:bg-opacity-20 transition-all disabled:opacity-50"
                     >
                       {loadingModels ? 'LOADING...' : 'REFRESH'}
                     </button>
@@ -215,7 +215,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   <select
                     value={settings.currentModel}
                     onChange={(e) => updateSettings({ currentModel: e.target.value })}
-                    className="w-full bg-black border border-alien-green rounded p-2 font-mono text-sm text-alien-green"
+                    className="w-full bg-black border-2 border-alien-green rounded p-2 font-mono text-sm text-alien-green"
                     disabled={loadingModels}
                   >
                     <option value="">SELECT MODEL...</option>
@@ -230,7 +230,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     type="text"
                     value={settings.currentModel}
                     onChange={(e) => updateSettings({ currentModel: e.target.value })}
-                    className="w-full bg-transparent border border-alien-green rounded p-2 font-mono text-sm text-alien-green placeholder-alien-green/30"
+                    className="w-full bg-transparent border-2 border-alien-green rounded p-2 font-mono text-sm text-alien-green placeholder-alien-green/30"
                     placeholder="model-name"
                   />
                 )}
@@ -251,8 +251,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     onClick={() => handleThemeChange(theme.value)}
                     className={`p-3 border rounded font-mono text-sm transition-all flex items-center justify-between ${
                       settings.colorTheme === theme.value
-                        ? 'border-opacity-100 bg-opacity-20'
-                        : 'border-opacity-30 hover:border-opacity-60'
+                        ? 'border-2 bg-opacity-20'
+                        : 'border hover:border-2'
                     }`}
                     style={{
                       borderColor: theme.color,
@@ -306,13 +306,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         <div className="mt-8 pt-4 border-t border-alien-green flex justify-between">
           <button
             onClick={resetSettings}
-            className="px-4 py-2 border border-alien-green rounded font-mono text-sm text-alien-green hover:bg-alien-green hover:bg-opacity-20 transition-all"
+            className="px-4 py-2 border-2 border-alien-green rounded font-mono text-sm text-alien-green hover:bg-alien-green hover:bg-opacity-20 transition-all"
           >
             RESET TO DEFAULTS
           </button>
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-alien-green bg-opacity-20 border border-alien-green rounded font-mono text-sm text-alien-green hover:bg-opacity-30 transition-all"
+            className="px-6 py-2 bg-alien-green bg-opacity-20 border-2 border-alien-green rounded font-mono text-sm text-alien-green hover:bg-opacity-30 transition-all"
           >
             CLOSE
           </button>
