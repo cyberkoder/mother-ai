@@ -1,10 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#000000"/>
-  <rect x="2" y="2" width="28" height="28" rx="2" fill="#001100"/>
-  <rect x="4" y="4" width="24" height="20" fill="#000000"/>
-  <text x="6" y="12" font-family="monospace" font-size="8" fill="#00ff41">M/U</text>
-  <text x="6" y="20" font-family="monospace" font-size="8" fill="#00ff41">6000</text>
-  <rect x="6" y="22" width="12" height="1" fill="#00ff41" opacity="0.6">
-    <animate attributeName="opacity" values="0;1;0" dur="1s" repeatCount="indefinite"/>
-  </rect>
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" fill="#001100"/>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="monospace" font-size="24" fill="#00ff41" text-shadow="0 0 2px #00ff41, 0 0 4px #00ff41">
+    M
+  </text>
 </svg>

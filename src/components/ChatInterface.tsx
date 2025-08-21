@@ -70,14 +70,15 @@ const ChatInterface: React.FC = () => {
 
   // Typewriter effect for MOTHER's messages
   const typewriterEffect = useCallback((messageId: string, text: string, speed: number = 30) => {
+    const formattedText = text.replace(/(\d+\.\s)/g, '\n$1').trim();
     let index = 0;
     setDisplayedText(prev => ({ ...prev, [messageId]: '' }));
     
     const interval = setInterval(() => {
-      if (index < text.length) {
+      if (index < formattedText.length) {
         setDisplayedText(prev => ({
           ...prev,
-          [messageId]: text.substring(0, index + 1)
+          [messageId]: formattedText.substring(0, index + 1)
         }));
         index++;
         if (settings.enableSounds && index % 3 === 0) {
@@ -102,6 +103,7 @@ const ChatInterface: React.FC = () => {
       red: { main: '#ff0040', dark: '#220011' },
       purple: { main: '#aa00ff', dark: '#110022' },
       cyan: { main: '#00ffaa', dark: '#001122' },
+      alienEarth: { main: '#ffb86c', dark: '#0d1a26' },
     };
     
     const colors = themeColors[settings.colorTheme];
@@ -471,6 +473,8 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
     setInput('');
     setIsTyping(true);
 
+    setIsTyping(true);
+
     try {
       const response = await AIService.sendMessage(currentInput, settings);
       
@@ -481,12 +485,13 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
         timestamp: new Date()
       };
 
+      const delay = Math.random() * 1000 + 500; // Random delay between 500ms and 1500ms
       setTimeout(() => {
         setMessages(prev => [...prev, motherMessage]);
         setIsTyping(false);
         setTypingMessageId(motherMessage.id);
         typewriterEffect(motherMessage.id, motherMessage.content);
-      }, 1000);
+      }, delay);
     } catch (error) {
       console.error('AI Service Error:', error);
       const errorMessage: Message = {
@@ -541,10 +546,11 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
             <div className="flex gap-2 mb-2">
               <button
                 onClick={clearChat}
-                className="px-3 py-1 border-2 border-alien-green/50 bg-black/80 font-mono text-xs text-alien-green/70 hover:border-alien-green hover:bg-alien-green/5 hover:text-alien-green transition-all"
+                className="px-3 py-1 border-2 border-alien-green bg-black/80 font-mono text-xs text-alien-green hover:border-alien-green hover:bg-alien-green/5 hover:text-glow transition-all relative group"
                 title="Clear chat (or type 'clear')"
               >
-                CLEAR
+                <span className="relative z-10">◦ CLEAR ◦</span>
+                <div className="absolute inset-0 border border-alien-green/20 rounded opacity-0 group-hover:opacity-100 transition-opacity animate-pulse"></div>
               </button>
               <button
                 onClick={() => setShowSettings(true)}
@@ -582,10 +588,8 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
                     <span className="text-sm opacity-70">
                       [CREW]
                     </span>
-                    <div className="mt-1">
-                      <span className="text-alien-green/60">&gt;&gt; </span>
-                      <span className="uppercase tracking-wider">{message.content}</span>
-                    </div>
+                    <span className="text-alien-green/60 ml-2">&gt;&gt; </span>
+                    <span className="uppercase tracking-wider">{message.content}</span>
                   </>
                 ) : (
                   <>

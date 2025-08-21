@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export type AIProvider = 'ollama' | 'openai' | 'google' | 'anthropic';
-export type ColorTheme = 'green' | 'yellow' | 'blue' | 'red' | 'purple' | 'cyan';
+export type ColorTheme = 'green' | 'yellow' | 'blue' | 'red' | 'purple' | 'cyan' | 'alienEarth';
 
 export interface Settings {
   // AI Provider settings

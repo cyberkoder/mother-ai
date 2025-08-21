@@ -11,6 +11,9 @@ module.exports = {
         'alien-glow': 'var(--theme-color)',
         'theme': 'var(--theme-color)',
         'theme-dark': 'var(--theme-color-dark)',
+        'alien-earth-blue': '#0d1a26',
+        'alien-earth-amber': '#ffb86c',
+        'alien-earth-dark': '#000000',
       },
       fontFamily: {
         'mono': ['Courier New', 'monospace'],

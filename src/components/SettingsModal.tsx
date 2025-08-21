@@ -57,6 +57,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     { value: 'red', label: 'HAL 9000 RED', color: '#ff0040' },
     { value: 'purple', label: 'VOID PURPLE', color: '#aa00ff' },
     { value: 'cyan', label: 'MATRIX CYAN', color: '#00ffaa' },
+    { value: 'alienEarth', label: 'ALIEN EARTH', color: '#ffb86c' },
   ];
 
   const handleProviderChange = (provider: AIProvider) => {
@@ -83,13 +84,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       red: '#ff0040',
       purple: '#aa00ff',
       cyan: '#00ffaa',
+      alienEarth: '#ffb86c',
     };
     root.style.setProperty('--theme-color', themeColors[theme]);
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-      <div className="bg-black border-2 border-alien-green rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto text-alien-green">
+            <div className={`bg-black border-2 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto text-alien-green`} style={{ borderColor: 'var(--theme-color)', color: 'var(--theme-color)' }}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-mono text-glow">SYSTEM CONFIGURATION</h2>
           <button
@@ -312,7 +314,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           </button>
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-alien-green bg-opacity-20 border-2 border-alien-green rounded font-mono text-sm text-alien-green hover:bg-opacity-30 transition-all"
+            className="px-6 py-2 bg-alien-green bg-opacity-80 border-2 border-alien-green rounded font-mono text-sm text-black hover:bg-opacity-100 transition-all"
           >
             CLOSE
           </button>
