@@ -3,8 +3,9 @@ import { useSoundEffects } from '../hooks/useSoundEffects';
 import { useSettings } from '../contexts/SettingsContext';
 import { AIService } from '../services/aiService';
 import { wikiDB } from '../services/wikiDatabase';
-import { Planet, Alien } from '../types/wiki';
+import { Planet, Alien, Character, Organization, Spaceship, Movie } from '../types/wiki';
 import SettingsModal from './SettingsModal';
+import Suggestions from './Suggestions';
 
 interface Message {
   id: string;
@@ -32,6 +33,7 @@ const ChatInterface: React.FC = () => {
   const [availableModels, setAvailableModels] = useState<Model[]>([]);
   const [isSelectingModel, setIsSelectingModel] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { playKeypress, playBeep, playBootSound } = useSoundEffects();
@@ -39,10 +41,10 @@ const ChatInterface: React.FC = () => {
   const bootSequence = [
     'WEYLAND-YUTANI SYSTEMS',
     'NOSTROMO MAINFRAME BOOT SEQUENCE',
-    'INITIALIZING MU/TH/UR 6000...',
-    'LOADING NEURAL PROTOCOLS...',
-    'LOADING KNOWLEDGE DATABASE...',
-    'ESTABLISHING SECURE CONNECTION...',
+    'INITIALIZING MU/TH/UR 6000...', 
+    'LOADING NEURAL PROTOCOLS...', 
+    'LOADING KNOWLEDGE DATABASE...', 
+    'ESTABLISHING SECURE CONNECTION...', 
     'INTERFACE READY',
     'AWAITING CREW INPUT...'
   ];
@@ -65,8 +67,26 @@ const ChatInterface: React.FC = () => {
     setInput('');
     setTypingMessageId(null);
     setDisplayedText({});
+    setSuggestions([]);
     if (settings.enableSounds) playBeep();
   };
+
+  const generateSuggestions = useCallback((text: string) => {
+    const lowerText = text.toLowerCase();
+    const newSuggestions: string[] = [];
+
+    if (lowerText.includes('planet')) {
+      newSuggestions.push('What is the climate of this planet?', 'Who are the inhabitants?', 'What are its notable locations?');
+    } else if (lowerText.includes('alien') || lowerText.includes('xenomorph') || lowerText.includes('hybrid')) {
+      newSuggestions.push('What is their home planet?', 'What are their notable abilities?', 'Tell me about their culture.');
+    } else if (lowerText.includes('directive')) {
+      newSuggestions.push('What is your primary directive?', 'Do you have other directives?', 'Who gave you these directives?');
+    } else if (lowerText.includes('system') || lowerText.includes('status')) {
+      newSuggestions.push('What is the status of the ship?', 'Are there any system alerts?', 'Report on power levels.');
+    }
+
+    setSuggestions(newSuggestions);
+  }, []);
 
   // Typewriter effect for MOTHER's messages
   const typewriterEffect = useCallback((messageId: string, text: string, speed: number = 30) => {
@@ -87,11 +107,12 @@ const ChatInterface: React.FC = () => {
       } else {
         clearInterval(interval);
         setTypingMessageId(null);
+        generateSuggestions(formattedText);
       }
     }, speed);
     
     return () => clearInterval(interval);
-  }, [settings.enableSounds, playKeypress]);
+  }, [settings.enableSounds, playKeypress, generateSuggestions]);
 
   // Update theme colors when theme changes
   useEffect(() => {
@@ -186,7 +207,7 @@ const ChatInterface: React.FC = () => {
       
       const confirmMessage: Message = {
         id: Date.now().toString(),
-        content: `MODEL UPDATED: ${selectedModel.toUpperCase()}. NEURAL PROTOCOLS RECONFIGURED.`,
+        content: `MODEL UPDATED: ${selectedModel.toUpperCase()}. NEURAL PROTOCOLS RECONFIGURED.`, 
         sender: 'mother',
         timestamp: new Date()
       };
@@ -211,20 +232,7 @@ const ChatInterface: React.FC = () => {
     switch (command) {
       case '/wiki':
         if (args.length === 0) {
-          return `NOSTROMO KNOWLEDGE DATABASE ACTIVE
-
-AVAILABLE COMMANDS:
-/planets [search] - Search planetary database
-/aliens [search] - Search xenobiological database
-/wiki help - Show this help message
-
-EXAMPLES:
-/planets Tatooine
-/aliens Xenomorph
-/planets desert
-/aliens humanoid
-
-DATABASE ENTRIES: ${wikiDB.getAllPlanets().length} planets, ${wikiDB.getAllAliens().length} alien species`;
+          return `NOSTROMO KNOWLEDGE DATABASE ACTIVE\n\nAVAILABLE COMMANDS:\n/planets [search] - Search planetary database\n/aliens [search] - Search xenobiological database\n/characters [search] - Search character database\n/organizations [search] - Search organization database\n/spaceships [search] - Search spaceship database\n/movies [search] - Search movie database\n/wiki help - Show this help message\n\nEXAMPLES:\n/planets LV-426\n/aliens Xenomorph\n/characters Ripley\n\nDATABASE ENTRIES: ${wikiDB.getAllPlanets().length} planets, ${wikiDB.getAllAliens().length} aliens, ${wikiDB.getAllCharacters().length} characters, ${wikiDB.getAllOrganizations().length} organizations, ${wikiDB.getAllSpaceships().length} spaceships, ${wikiDB.getAllMovies().length} movies`;
         }
         if (args[0] === 'help') {
           return handleWikiCommand('/wiki');
@@ -234,11 +242,7 @@ DATABASE ENTRIES: ${wikiDB.getAllPlanets().length} planets, ${wikiDB.getAllAlien
       case '/planets':
         if (args.length === 0) {
           const planets = wikiDB.getAllPlanets();
-          return `PLANETARY DATABASE - ${planets.length} ENTRIES:
-
-${planets.map(p => `• ${p.name.toUpperCase()} (${p.franchise}) - ${p.classification}`).join('\n')}
-
-Use: /planets [name] to get detailed information`;
+          return `PLANETARY DATABASE - ${planets.length} ENTRIES:\n\n${planets.map(p => `• ${p.name.toUpperCase()} (${p.franchise}) - ${p.classification}`).join('\n')}\n\nUse: /planets [name] to get detailed information`;
         } else {
           const query = args.join(' ');
           const results = wikiDB.searchPlanets(query);
@@ -246,16 +250,10 @@ Use: /planets [name] to get detailed information`;
             if (results.length === 1) {
               return formatPlanetDetails(results[0]);
             } else {
-              return `PLANETARY SEARCH RESULTS (${results.length}):
-
-${results.map(p => `• ${p.name.toUpperCase()} (${p.franchise}) - ${p.classification}`).join('\n')}
-
-Use: /planets [exact name] for detailed information`;
+              return `PLANETARY SEARCH RESULTS (${results.length}):\n\n${results.map(p => `• ${p.name.toUpperCase()} (${p.franchise}) - ${p.classification}`).join('\n')}\n\nUse: /planets [exact name] for detailed information`;
             }
           } else {
-            return `NO PLANETARY DATA FOUND FOR: "${query.toUpperCase()}"
-
-SUGGESTION: Try /planets to see all available entries`;
+            return `NO PLANETARY DATA FOUND FOR: "${query.toUpperCase()}"\n\nSUGGESTION: Try /planets to see all available entries`;
           }
         }
         break;
@@ -263,11 +261,7 @@ SUGGESTION: Try /planets to see all available entries`;
       case '/aliens':
         if (args.length === 0) {
           const aliens = wikiDB.getAllAliens();
-          return `XENOBIOLOGICAL DATABASE - ${aliens.length} ENTRIES:
-
-${aliens.map(a => `• ${a.name.toUpperCase()} (${a.franchise}) - ${a.classification}`).join('\n')}
-
-Use: /aliens [name] to get detailed information`;
+          return `XENOBIOLOGICAL DATABASE - ${aliens.length} ENTRIES:\n\n${aliens.map(a => `• ${a.name.toUpperCase()} (${a.franchise}) - ${a.classification}`).join('\n')}\n\nUse: /aliens [name] to get detailed information`;
         } else {
           const query = args.join(' ');
           const results = wikiDB.searchAliens(query);
@@ -275,19 +269,89 @@ Use: /aliens [name] to get detailed information`;
             if (results.length === 1) {
               return formatAlienDetails(results[0]);
             } else {
-              return `XENOBIOLOGICAL SEARCH RESULTS (${results.length}):
-
-${results.map(a => `• ${a.name.toUpperCase()} (${a.franchise}) - ${a.classification}`).join('\n')}
-
-Use: /aliens [exact name] for detailed information`;
+              return `XENOBIOLOGICAL SEARCH RESULTS (${results.length}):\n\n${results.map(a => `• ${a.name.toUpperCase()} (${a.franchise}) - ${a.classification}`).join('\n')}\n\nUse: /aliens [exact name] for detailed information`;
             }
           } else {
-            return `NO XENOBIOLOGICAL DATA FOUND FOR: "${query.toUpperCase()}"
-
-SUGGESTION: Try /aliens to see all available entries`;
+            return `NO XENOBIOLOGICAL DATA FOUND FOR: "${query.toUpperCase()}"\n\nSUGGESTION: Try /aliens to see all available entries`;
           }
         }
         break;
+
+      case '/characters':
+        if (args.length === 0) {
+          const characters = wikiDB.getAllCharacters();
+          return `CHARACTER DATABASE - ${characters.length} ENTRIES:\n\n${characters.map(c => `• ${c.name.toUpperCase()} (${c.franchise}) - ${c.occupation}`).join('\n')}\n\nUse: /characters [name] to get detailed information`;
+        } else {
+          const query = args.join(' ');
+          const results = wikiDB.searchCharacters(query);
+          if (results.length > 0) {
+            if (results.length === 1) {
+              return formatCharacterDetails(results[0]);
+            } else {
+              return `CHARACTER SEARCH RESULTS (${results.length}):\n\n${results.map(c => `• ${c.name.toUpperCase()} (${c.franchise}) - ${c.occupation}`).join('\n')}\n\nUse: /characters [exact name] for detailed information`;
+            }
+          } else {
+            return `NO CHARACTER DATA FOUND FOR: "${query.toUpperCase()}"\n\nSUGGESTION: Try /characters to see all available entries`;
+          }
+        }
+        break;
+
+      case '/organizations':
+        if (args.length === 0) {
+          const organizations = wikiDB.getAllOrganizations();
+          return `ORGANIZATION DATABASE - ${organizations.length} ENTRIES:\n\n${organizations.map(o => `• ${o.name.toUpperCase()} (${o.franchise}) - ${o.type}`).join('\n')}\n\nUse: /organizations [name] to get detailed information`;
+        } else {
+          const query = args.join(' ');
+          const results = wikiDB.searchOrganizations(query);
+          if (results.length > 0) {
+            if (results.length === 1) {
+              return formatOrganizationDetails(results[0]);
+            } else {
+              return `ORGANIZATION SEARCH RESULTS (${results.length}):\n\n${results.map(o => `• ${o.name.toUpperCase()} (${o.franchise}) - ${o.type}`).join('\n')}\n\nUse: /organizations [exact name] for detailed information`;
+            }
+          } else {
+            return `NO ORGANIZATION DATA FOUND FOR: "${query.toUpperCase()}"\n\nSUGGESTION: Try /organizations to see all available entries`;
+          }
+        }
+        break;
+
+      case '/spaceships':
+        if (args.length === 0) {
+          const spaceships = wikiDB.getAllSpaceships();
+          return `SPACESHIP DATABASE - ${spaceships.length} ENTRIES:\n\n${spaceships.map(s => `• ${s.name.toUpperCase()} (${s.franchise}) - ${s.class}`).join('\n')}\n\nUse: /spaceships [name] to get detailed information`;
+        } else {
+          const query = args.join(' ');
+          const results = wikiDB.searchSpaceships(query);
+          if (results.length > 0) {
+            if (results.length === 1) {
+              return formatSpaceshipDetails(results[0]);
+            } else {
+              return `SPACESHIP SEARCH RESULTS (${results.length}):\n\n${results.map(s => `• ${s.name.toUpperCase()} (${s.franchise}) - ${s.class}`).join('\n')}\n\nUse: /spaceships [exact name] for detailed information`;
+            }
+          } else {
+            return `NO SPACESHIP DATA FOUND FOR: "${query.toUpperCase()}"\n\nSUGGESTION: Try /spaceships to see all available entries`;
+          }
+        }
+        break;
+
+        case '/movies':
+            if (args.length === 0) {
+                const movies = wikiDB.getAllMovies();
+                return `MOVIE DATABASE - ${movies.length} ENTRIES:\n\n${movies.map(m => `• ${m.name.toUpperCase()} (${m.franchise}) - ${m.release_year}`).join('\n')}\n\nUse: /movies [name] to get detailed information`;
+            } else {
+                const query = args.join(' ');
+                const results = wikiDB.searchMovies(query);
+                if (results.length > 0) {
+                    if (results.length === 1) {
+                        return formatMovieDetails(results[0]);
+                    } else {
+                        return `MOVIE SEARCH RESULTS (${results.length}):\n\n${results.map(m => `• ${m.name.toUpperCase()} (${m.franchise}) - ${m.release_year}`).join('\n')}\n\nUse: /movies [exact name] for detailed information`;
+                    }
+                } else {
+                    return `NO MOVIE DATA FOUND FOR: "${query.toUpperCase()}"\n\nSUGGESTION: Try /movies to see all available entries`;
+                }
+            }
+            break;
 
       default:
         return 'UNKNOWN WIKI COMMAND. Use /wiki for help.';
@@ -296,46 +360,32 @@ SUGGESTION: Try /aliens to see all available entries`;
   };
 
   const formatPlanetDetails = (planet: Planet): string => {
-    return `PLANETARY ANALYSIS: ${planet.name.toUpperCase()}
-
-CLASSIFICATION: ${planet.classification}
-LOCATION: ${planet.location}
-ATMOSPHERE: ${planet.atmosphere}
-GRAVITY: ${planet.gravity}
-CLIMATE: ${planet.climate}
-
-DESCRIPTION:
-${planet.description}
-
-NOTABLE FEATURES:
-${planet.notable_features.map(f => `• ${f}`).join('\n')}
-
-NOTABLE LOCATIONS:
-${planet.notable_locations.map(l => `• ${l}`).join('\n')}
-
-INHABITANTS: ${planet.inhabitants.join(', ')}
-FIRST DOCUMENTED: ${planet.first_appearance}`;
+    return `PLANETARY ANALYSIS: ${planet.name.toUpperCase()}\n\nCLASSIFICATION: ${planet.classification}\nLOCATION: ${planet.location}\nATMOSPHERE: ${planet.atmosphere}\nGRAVITY: ${planet.gravity}\nCLIMATE: ${planet.climate}\n\nDESCRIPTION:\n${planet.description}\n\nNOTABLE FEATURES:\n${planet.notable_features.map(f => `• ${f}`).join('\n')}\n\nNOTABLE LOCATIONS:\n${planet.notable_locations.map(l => `• ${l}`).join('\n')}\n\nINHABITANTS: ${planet.inhabitants.join(', ')}\nFIRST DOCUMENTED: ${planet.first_appearance}`;
   };
 
   const formatAlienDetails = (alien: Alien): string => {
-    return `XENOBIOLOGICAL ANALYSIS: ${alien.name.toUpperCase()}
+    return `XENOBIOLOGICAL ANALYSIS: ${alien.name.toUpperCase()}\n\nSPECIES: ${alien.species}\nCLASSIFICATION: ${alien.classification}\nHOME PLANET: ${alien.home_planet}\nINTELLIGENCE LEVEL: ${alien.intelligence_level}\nPHYSIOLOGY: ${alien.physiology}\n\nDESCRIPTION:\n${alien.description}\n\nNOTABLE ABILITIES:\n${alien.notable_abilities.map(a => `• ${a}`).join('\n')}\n\nNOTABLE INDIVIDUALS:\n${alien.notable_individuals.map(i => `• ${i}`).join('\n')}\n\nFIRST DOCUMENTED: ${alien.first_appearance}`;
+  };
 
-SPECIES: ${alien.species}
-CLASSIFICATION: ${alien.classification}
-HOME PLANET: ${alien.home_planet}
-INTELLIGENCE LEVEL: ${alien.intelligence_level}
-PHYSIOLOGY: ${alien.physiology}
+  const formatCharacterDetails = (character: Character): string => {
+    return `CHARACTER ANALYSIS: ${character.name.toUpperCase()}\n\nSPECIES: ${character.species}\nOCCUPATION: ${character.occupation}\nAFFILIATION: ${character.affiliation}\nSTATUS: ${character.status}\n\nHISTORY:\n${character.history}\n\nFIRST APPEARANCE: ${character.first_appearance}`;
+    };
 
-DESCRIPTION:
-${alien.description}
+    const formatOrganizationDetails = (organization: Organization): string => {
+    return `ORGANIZATION ANALYSIS: ${organization.name.toUpperCase()}\n\nTYPE: ${organization.type}\nHEADQUARTERS: ${organization.headquarters}\nLEADER: ${organization.leader}\n\nHISTORY:\n${organization.history}\n\nFIRST APPEARANCE: ${organization.first_appearance}`;
+    };
 
-NOTABLE ABILITIES:
-${alien.notable_abilities.map(a => `• ${a}`).join('\n')}
+    const formatSpaceshipDetails = (spaceship: Spaceship): string => {
+    return `SPACESHIP ANALYSIS: ${spaceship.name.toUpperCase()}\n\nCLASS: ${spaceship.class}\nREGISTRY: ${spaceship.registry}\nOWNER: ${spaceship.owner}\nOPERATOR: ${spaceship.operator}\nSTATUS: ${spaceship.status}\n\nHISTORY:\n${spaceship.history}\n\nFIRST APPEARANCE: ${spaceship.first_appearance}`;
+    };
 
-NOTABLE INDIVIDUALS:
-${alien.notable_individuals.map(i => `• ${i}`).join('\n')}
+    const formatMovieDetails = (movie: Movie): string => {
+        return `MOVIE ANALYSIS: ${movie.name.toUpperCase()}\n\nDIRECTOR: ${movie.director}\nRELEASE YEAR: ${movie.release_year}\n\nPLOT SUMMARY:\n${movie.plot_summary}\n\nCHARACTERS:\n${movie.characters?.join(', ')}\n\nSETTING: ${movie.setting}`;
+    };
 
-FIRST DOCUMENTED: ${alien.first_appearance}`;
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion);
+    inputRef.current?.focus();
   };
 
   const sendMessage = async () => {
@@ -346,6 +396,7 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
       setCommandHistory(prev => [...prev.slice(-19), input.trim()]); // Keep last 20 commands
     }
     setHistoryIndex(-1);
+    setSuggestions([]);
 
     // Check for special commands
     if (input.toLowerCase() === 'clear' || input.toLowerCase() === 'cls') {
@@ -368,7 +419,7 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
       
       const settingsMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'OPENING SYSTEM CONFIGURATION...',
+        content: 'OPENING SYSTEM CONFIGURATION...', 
         sender: 'mother',
         timestamp: new Date()
       };
@@ -398,7 +449,7 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
         
         const listMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: `AVAILABLE NEURAL MODELS:\n${modelList}\n\nENTER SELECTION NUMBER:`,
+          content: `AVAILABLE NEURAL MODELS:\n${modelList}\n\nENTER SELECTION NUMBER:`, 
           sender: 'mother',
           timestamp: new Date()
         };
@@ -435,7 +486,7 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
     setIsSelectingModel(false);
 
     // Check for wiki commands
-    if (input.toLowerCase().startsWith('/planets') || input.toLowerCase().startsWith('/aliens') || 
+    if (input.toLowerCase().startsWith('/planets') || input.toLowerCase().startsWith('/aliens') || input.toLowerCase().startsWith('/characters') || input.toLowerCase().startsWith('/organizations') || input.toLowerCase().startsWith('/spaceships') || input.toLowerCase().startsWith('/movies') ||
         input.toLowerCase().startsWith('/wiki')) {
       if (settings.enableSounds) playBeep();
       const userMessage: Message = {
@@ -473,8 +524,6 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
     setInput('');
     setIsTyping(true);
 
-    setIsTyping(true);
-
     try {
       const response = await AIService.sendMessage(currentInput, settings);
       
@@ -496,7 +545,7 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
       console.error('AI Service Error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `COMMUNICATION ERROR: ${error instanceof Error ? error.message : 'Unknown error'}. CHECK CONSOLE FOR DETAILS.`,
+        content: `COMMUNICATION ERROR: ${error instanceof Error ? error.message : 'Unknown error'}. CHECK CONSOLE FOR DETAILS.`, 
         sender: 'mother',
         timestamp: new Date()
       };
@@ -547,7 +596,7 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
               <button
                 onClick={clearChat}
                 className="px-3 py-1 border-2 border-alien-green bg-black/80 font-mono text-xs text-alien-green hover:border-alien-green hover:bg-alien-green/5 hover:text-glow transition-all relative group"
-                title="Clear chat (or type 'clear')"
+                title="Clear chat (or type 'clear)')"
               >
                 <span className="relative z-10">◦ CLEAR ◦</span>
                 <div className="absolute inset-0 border border-alien-green/20 rounded opacity-0 group-hover:opacity-100 transition-opacity animate-pulse"></div>
@@ -577,7 +626,7 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`font-mono text-base ${
+                className={`font-mono text-base ${ 
                   message.sender === 'user' 
                     ? 'pl-4 border-l-2 border-alien-green/50 text-alien-green' 
                     : 'text-alien-green text-glow'
@@ -595,7 +644,7 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
                   <>
                     <div className="group relative">
                       <span className="text-alien-green text-glow">{'> '}</span>
-                      <span className={`${message.sender === 'mother' && isBooting ? 'animate-pulse' : ''} text-glow`}>
+                      <span className={`${message.sender === 'mother' && isBooting ? 'animate-pulse' : ''} text-glow whitespace-pre-wrap`}>
                         {typingMessageId === message.id 
                           ? displayedText[message.id] || ''
                           : message.content}
@@ -659,6 +708,7 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
             )}
           </div>
         </div>
+        <Suggestions suggestions={suggestions} onSuggestionClick={handleSuggestionClick} />
 
         <div className="mt-2 text-alien-green/50 font-mono text-xs flex justify-between">
           <div>
@@ -670,8 +720,8 @@ FIRST DOCUMENTED: ${alien.first_appearance}`;
             <p>INTERFACE DEVELOPED BY</p>
             <p>
               <a 
-                href="https://a.leonenko.me/" 
-                target="_blank" 
+                href="https://a.leonenko.me/"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-alien-green hover:opacity-80 transition-opacity"
               >
